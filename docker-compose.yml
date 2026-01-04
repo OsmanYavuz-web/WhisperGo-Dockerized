@@ -1,0 +1,17 @@
+services:
+  whisper:
+    build: .
+    container_name: WhisperGo-Dockerized
+    ports:
+      - "${PORT:-6666}:6666"
+    volumes:
+      - ./models:/app/models
+    environment:
+      # Model: ggml-tiny.bin, ggml-base.bin, ggml-small.bin, ggml-medium.bin, ggml-large-v3-turbo.bin
+      - WHISPER_MODEL=${WHISPER_MODEL:-ggml-base.bin}
+      # Seçenekler: tr, en, de, fr, es, it, pt, ru, ja, ko, zh, auto
+      - WHISPER_LANGUAGE=${WHISPER_LANGUAGE:-tr}
+      - WHISPER_HOST=0.0.0.0
+      - WHISPER_PORT=6666
+    restart: unless-stopped
+
