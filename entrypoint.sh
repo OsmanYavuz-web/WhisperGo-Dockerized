@@ -5,7 +5,7 @@ set -e
 MODEL="${WHISPER_MODEL:-ggml-base.bin}"
 LANG="${WHISPER_LANGUAGE:-tr}"
 HOST="${WHISPER_HOST:-0.0.0.0}"
-PORT="${WHISPER_PORT:-6666}"
+PORT="${WHISPER_PORT:-8080}"
 MODEL_PATH="/app/models/${MODEL}"
 
 # Model Download Logic

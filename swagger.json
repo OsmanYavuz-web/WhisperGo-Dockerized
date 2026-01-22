@@ -1,0 +1,175 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "WhisperGo API",
+    "description": "GPU/CPU hızlandırmalı Whisper ses transkripsiyon servisi.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/inference": {
+      "post": {
+        "summary": "Ses dosyasını metne çevir",
+        "description": "Bir ses dosyası yükleyerek transkripsiyon işlemini başlatır. Senkron veya Asenkron çalışabilir.",
+        "operationId": "inference",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Yüklenecek ses dosyası (wav, mp3, m4a, vb.)"
+                  },
+                  "language": {
+                    "type": "string",
+                    "default": "tr",
+                    "description": "Hedef dil kodu (tr, en, auto vb.)"
+                  },
+                  "response_format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "text"
+                    ],
+                    "default": "json",
+                    "description": "Çıktı formatı."
+                  },
+                  "async": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "true (varsayılan) ise job_id döner. false ise bitene kadar bekler."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı işlem sonucu veya Job ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string"
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "segments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "job_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status/{job_id}": {
+      "get": {
+        "summary": "Job durumunu sorgula",
+        "description": "Asenkron işlem başlatıldığında dönen job_id ile durum sorgulanır.",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job durumu ve (varsa) sonucu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "processing",
+                        "completed",
+                        "failed"
+                      ]
+                    },
+                    "result": {
+                      "type": "object"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Sistem sağlık kontrolü",
+        "responses": {
+          "200": {
+            "description": "Sistem durumu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "queue_size": {
+                      "type": "integer"
+                    },
+                    "active_jobs": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

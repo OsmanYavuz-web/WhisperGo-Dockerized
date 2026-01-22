@@ -46,6 +46,7 @@ COPY --from=builder /build/build/bin/whisper-cli /app/bin/whispergo-cli
 COPY --from=builder /build/models/download-ggml-model.sh /app/download-ggml-model.sh
 COPY entrypoint.sh /app/entrypoint.sh
 COPY cli-api.py /app/cli-api.py
+COPY swagger.json /app/swagger.json
 
 # Set Permissions
 RUN chmod +x /app/entrypoint.sh /app/download-ggml-model.sh /app/bin/whispergo /app/bin/whispergo-cli && \
@@ -57,6 +58,6 @@ USER whisper
 
 # Environment Defaults
 ENV PATH="/app/bin:${PATH}"
-EXPOSE 6666
+EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]

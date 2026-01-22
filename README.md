@@ -7,15 +7,18 @@ Bu proje, OpenAI'nin Whisper modelinin yüksek performanslı C/C++ implementasyo
 *   🚀 **Yüksek Performans:** C/C++ tabanlı motor, Multi-Stage build ile optimize edilmiş imaj.
 *   🐋 **Docker Ready:** Tek komutla (Docker Compose) ayağa kalkmaya hazır.
 *   🔒 **Güvenli:** Non-root (yetkisiz) kullanıcı ile çalışarak prodüksiyon güvenliği sağlar.
-*   🌐 **REST API:** Kolay entegrasyon için hazır HTTP server.
-*   🖥️ **Web Arayüzü:** Ses dosyalarını tarayıcı üzerinden test etmek için yerleşik arayüz.
+*   🌐 **REST API:** Kolay entegrasyon için hazır HTTP server (Queue & Async Support).
+*   🖥️ **Web Arayüzü:** Ses dosyalarını tarayıcı üzerinden test etmek için yerleşik Swagger UI.
 *   🌍 **Çok Dilli:** Türkçe dahil 99+ dilde yüksek doğrulukta transkripsiyon.
 *   📦 **Standalone:** Harici hiçbir kütüphaneye veya bağımlılığa ihtiyaç duymaz.
 *   💾 **CLI Mode:** Her istekte model yüklenir, bellek sadece işlem sırasında kullanılır.
 
-## 🚀 Hızlı Başlangıç
+---
 
-Projeyi ayağa kaldırmak için aşağıdaki adımları izleyin:
+## 🚀 Kurulum (Seçiminizi Yapın)
+
+### Seçenek 1: Docker (Önerilen)
+Hiçbir şey kurmanıza gerek yok, sadece Docker yeterli.
 
 ```bash
 # Servisi başlat (Model yoksa otomatik indirilecektir)
@@ -24,100 +27,77 @@ docker-compose up -d --build
 # Logları takip et
 docker-compose logs -f
 ```
+Server: `http://localhost:8080`
 
-Server varsayılan olarak `http://localhost:6666` adresinde çalışır.
+---
 
-## ⚙️ Yapılandırma
+### Seçenek 2: Local Geliştirme (Python - Docker'sız)
+Eğer kendi makinenizde `whisper.cpp` binary'si ile çalıştırmak isterseniz:
 
-Yapılandırma için `.env` dosyasını kullanabilirsiniz. Eğer yoksa `.env.example` dosyasını kopyalayarak oluşturun:
+1.  **Gereksinimler:** Python 3.9+, [whisper-cli](https://github.com/ggml-org/whisper.cpp) binary dosyası.
+2.  **Çalıştırma:**
 
-```bash
-cp .env.example .env
+**Windows (PowerShell):**
+```powershell
+# Yolları kendi sistemine göre düzenle
+$env:WHISPER_CLI_PATH="C:\Tools\whisper.cpp\main.exe"
+$env:WHISPER_MODEL_PATH="C:\Tools\whisper.cpp\models\ggml-base.bin"
+$env:WHISPER_PORT="8080"
+
+python cli-api.py
 ```
 
-### `.env` Değişkenleri:
-
-| Değişken | Açıklama | Varsayılan |
-|----------|----------|------------|
-| `PORT` | Dış erişim portu | `6666` |
-| `WHISPER_PORT` | İç WhisperGo portu | `6666` |
-| `WHISPER_HOST` | Bind adresi | `0.0.0.0` |
-| `WHISPER_MODEL` | Kullanılacak model | `ggml-base.bin` |
-| `WHISPER_LANGUAGE` | Varsayılan dil | `tr` |
-
-### Environment değişikliklerini yaptıktan sonra servisi güncellemek için:
-
-```bash
-docker-compose up -d
-```
-
-### Mevcut Modeller:
-
-| Model | Boyut | Not |
-|-------|-------|-----|
-| `ggml-tiny.bin` | 75 MB | ⚡ En Hızlı |
-| `ggml-base.bin` | 142 MB | ✅ Dengeli (Önerilen) |
-| `ggml-small.bin` | 466 MB | ⭐ İyi Doğruluk |
-| `ggml-medium.bin` | 1.5 GB | 🎯 Yüksek Doğruluk |
-| `ggml-large-v3-turbo.bin` | 1.5 GB | 🚀 Hızlı & Güçlü |
-
-## 💾 CLI Mode (Bellek Optimize)
-
-WhisperGo **CLI Mode** ile çalışır:
-
-- Her istek için model yüklenir
-- İşlem bitince bellek serbest kalır
-- Avantaj: RAM sadece işlem sırasında kullanılır
-- Dezavantaj: Her istek ~2-5 saniye ekstra (model yükleme)
-
-```
-┌─────────────────────────────────────────┐
-│            HER İSTEKTE                  │
-│                                         │
-│  1. Model yüklenir (~2-5s)              │
-│  2. Ses dosyası işlenir                 │
-│  3. Sonuç döndürülür                    │
-│  4. Bellek serbest kalır                │
-└─────────────────────────────────────────┘
-```
+---
 
 ## 📡 API Kullanımı
 
-### Ses Dosyası Gönderme (cURL)
+### 1. Swagger UI (Web Arayüzü)
+Tarayıcıdan **[http://localhost:8080/docs](http://localhost:8080/docs)** adresine gidin.
 
+### 2. cURL ile Kullanım
+
+**Senkron (Bekleyerek):**
 ```bash
-curl http://localhost:6666/inference \
+curl http://localhost:8080/inference \
   -H "Content-Type: multipart/form-data" \
   -F file="@ses-dosyasi.wav" \
-  -F language="tr" \
-  -F response_format="json"
+  -F language="tr"
 ```
 
-### Health Check
-
+**Asenkron (Hemen Job ID Al):**
 ```bash
-curl http://localhost:6666/health
+curl http://localhost:8080/inference \
+  -H "Content-Type: multipart/form-data" \
+  -F file="@ses-dosyasi.wav" \
+  -F async="true"
 ```
+_Dönen `job_id` ile durum sorgulama: `/status/{job_id}`_
+
+---
+
+## ⚙️ Yapılandırma (`.env`)
+
+Varsayılan ayarları değiştirmek için `.env` dosyasını düzenleyin:
+
+| Değişken | Varsayılan | Açıklama |
+|----------|------------|----------|
+| `PORT` | `8080` | Dış erişim portu |
+| `WHISPER_MODEL` | `ggml-base.bin` | Model boyutu (tiny, base, small, medium, large) |
+| `WHISPER_TIMEOUT` | `1200` | İşlem başına zaman aşımı (saniye) |
+
+---
 
 ## 📁 Klasör Yapısı
 
 ```text
 WhisperGo-Dockerized/
-├── Dockerfile          # Multi-Stage build tanımı (Builder & Runtime)
+├── Dockerfile          # Multi-Stage build
 ├── docker-compose.yml  # Servis orkestrasyonu
-├── entrypoint.sh       # Konteyner başlangıç ve model kontrol scripti
-├── cli-api.py          # CLI mode API handler
-├── .env                # Yapılandırma (Git-ignored)
-├── .env.example        # Örnek yapılandırma
-└── models/             # İndirilen modeller (Kalıcı depolama)
+├── cli-api.py          # Queue & Thread tabanlı Python API
+├── swagger.json        # OpenAPI Dokümantasyonu
+├── .env                # Ayarlar
+└── models/             # Modeller (Otomatik iner)
 ```
-
-## 🛠️ Teknik Notlar
-
-*   **Multi-Stage Build:** İmaj boyutu optimize edilmiştir, gereksiz derleme araçları son imajda bulunmaz.
-*   **Security Context:** Konteyner `whisper` adında non-root bir kullanıcı ile çalışır.
-*   **CLI Mode:** Her istekte `whispergo-cli` çağrılır, model bellekte tutulmaz.
-*   Servis başlatıldığında seçili model `models/` klasöründe yoksa otomatik olarak Hugging Face üzerinden indirilir.
 
 ## 👤 Hazırlayan
 
